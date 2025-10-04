@@ -88,7 +88,7 @@ export default async function Home({
       <div className="flex flex-wrap gap-4 px-4 py-6">
         <div className="flex min-w-72 flex-1 flex-col gap-2 rounded-xl border border-[--border] p-6 bg-[--card]">
           <p className="text-[--muted-foreground] text-base font-medium">Sales Over Time</p>
-          <p className="text-[32px] font-bold truncate">$12,500</p>
+          <p className="text-[32px] font-bold truncate">${'{'}metrics.totalRevenue.toLocaleString(){'}'}</p>
           <div className="flex gap-1">
             <p className="text-[--muted-foreground] text-base">This Week</p>
             <p className="text-green-500 text-base font-medium">+5%</p>
