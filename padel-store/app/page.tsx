@@ -1,4 +1,37 @@
-export default function Home() {
+import { prisma } from './lib/prisma'
+import { getRange, getPreviousRange } from './lib/date-range'
+
+async function getMetrics(rangeKey: 'today' | 'week' | 'month') {
+  const { start, end } = getRange(rangeKey)
+  const prev = getPreviousRange(rangeKey)
+
+  const [currentSales, currentRevenue, currentCOGS, prevRevenue] = await Promise.all([
+    prisma.sale.count({ where: { date: { gte: start, lte: end } } }),
+    prisma.sale.aggregate({ _sum: { totalAmount: true }, where: { date: { gte: start, lte: end } } }),
+    prisma.sale.aggregate({ _sum: { cogsAmount: true }, where: { date: { gte: start, lte: end } } }),
+    prisma.sale.aggregate({ _sum: { totalAmount: true }, where: { date: { gte: prev.start, lte: prev.end } } }),
+  ])
+
+  const totalRevenue = Number(currentRevenue._sum.totalAmount ?? 0)
+  const totalCOGS = Number(currentCOGS._sum.cogsAmount ?? 0)
+  const profitability = totalRevenue - totalCOGS
+  const prevRev = Number(prevRevenue._sum.totalAmount ?? 0)
+  const delta = prevRev === 0 ? 100 : ((totalRevenue - prevRev) / Math.max(prevRev, 1)) * 100
+
+  // crude inventory status: total quantity of variants
+  const inventoryQty = await prisma.inventory.aggregate({ _sum: { quantity: true } })
+
+  return {
+    totalSales: currentSales,
+    totalRevenue,
+    profitability,
+    inventoryQty: Number(inventoryQty._sum.quantity ?? 0),
+    delta,
+  }
+}
+
+export default async function Home() {
+  const metrics = await getMetrics('week')
   return (
     <main className="min-h-screen bg-[--background] text-[--foreground]">
       <div className="p-4 pb-2 flex items-center justify-between">
@@ -31,18 +64,26 @@ export default function Home() {
       </div>
 
       <div className="flex flex-wrap gap-4 p-4">
-        {[
-          { title: 'Total Sales', value: '$12,500', delta: '+5%', deltaClass: 'text-green-500' },
-          { title: 'Inventory Status', value: '450 Rackets', delta: '-2%', deltaClass: 'text-red-500' },
-          { title: 'Total Revenue', value: '$25,000', delta: '+8%', deltaClass: 'text-green-500' },
-          { title: 'Profitability', value: '$8,200', delta: '+3%', deltaClass: 'text-green-500' },
-        ].map((c) => (
-          <div key={c.title} className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 bg-[--card] border border-[--border]">
-            <p className="text-[--muted-foreground] text-base font-medium">{c.title}</p>
-            <p className="text-2xl font-bold tracking-tight">{c.value}</p>
-            <p className={`${c.deltaClass} text-base font-medium`}>{c.delta}</p>
-          </div>
-        ))}
+        <div className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 bg-[--card] border border-[--border]">
+          <p className="text-[--muted-foreground] text-base font-medium">Total Sales</p>
+          <p className="text-2xl font-bold tracking-tight">{metrics.totalSales}</p>
+          <p className="text-green-500 text-base font-medium">{metrics.delta.toFixed(0)}%</p>
+        </div>
+        <div className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 bg-[--card] border border-[--border]">
+          <p className="text-[--muted-foreground] text-base font-medium">Inventory Status</p>
+          <p className="text-2xl font-bold tracking-tight">{metrics.inventoryQty} Items</p>
+          <p className="text-[--muted-foreground] text-base font-medium">in stock</p>
+        </div>
+        <div className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 bg-[--card] border border-[--border]">
+          <p className="text-[--muted-foreground] text-base font-medium">Total Revenue</p>
+          <p className="text-2xl font-bold tracking-tight">${'{'}metrics.totalRevenue.toLocaleString(){'}'}</p>
+          <p className="text-green-500 text-base font-medium">{metrics.delta.toFixed(0)}%</p>
+        </div>
+        <div className="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 bg-[--card] border border-[--border]">
+          <p className="text-[--muted-foreground] text-base font-medium">Profitability</p>
+          <p className="text-2xl font-bold tracking-tight">${'{'}metrics.profitability.toLocaleString(){'}'}</p>
+          <p className="text-green-500 text-base font-medium">{metrics.delta.toFixed(0)}%</p>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-4 px-4 py-6">
