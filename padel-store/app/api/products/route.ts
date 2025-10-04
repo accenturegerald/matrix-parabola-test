@@ -47,3 +47,26 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url)
+  const q = searchParams.get('q') ?? undefined
+  const take = Number(searchParams.get('take') ?? 50)
+  const skip = Number(searchParams.get('skip') ?? 0)
+
+  const where = q
+    ? {
+        OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { sku: { contains: q, mode: 'insensitive' } },
+          { brand: { contains: q, mode: 'insensitive' } },
+        ],
+      }
+    : {}
+
+  const [items, total] = await Promise.all([
+    prisma.product.findMany({ where, include: { variants: true }, take, skip, orderBy: { createdAt: 'desc' } }),
+    prisma.product.count({ where }),
+  ])
+  return NextResponse.json({ items, total })
+}
+

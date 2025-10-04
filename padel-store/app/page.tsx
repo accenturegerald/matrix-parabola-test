@@ -1,5 +1,6 @@
 import { prisma } from './lib/prisma'
 import { getRange, getPreviousRange } from './lib/date-range'
+import { DateRangeTabs } from './components/DateRangeTabs'
 
 async function getMetrics(rangeKey: 'today' | 'week' | 'month') {
   const { start, end } = getRange(rangeKey)
@@ -30,8 +31,13 @@ async function getMetrics(rangeKey: 'today' | 'week' | 'month') {
   }
 }
 
-export default async function Home() {
-  const metrics = await getMetrics('week')
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: { range?: 'today' | 'week' | 'month' }
+}) {
+  const range = searchParams?.range ?? 'week'
+  const metrics = await getMetrics(range)
   return (
     <main className="min-h-screen bg-[--background] text-[--foreground]">
       <div className="p-4 pb-2 flex items-center justify-between">
@@ -53,14 +59,7 @@ export default async function Home() {
       </div>
 
       <div className="px-4 py-3">
-        <div className="flex h-10 items-center justify-center rounded-lg p-1 border border-[--border] bg-[--card]">
-          {['Today', 'This Week', 'This Month'].map((label, i) => (
-            <label key={label} className="flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 has-[:checked]:bg-[--primary] has-[:checked]:text-[--primary-foreground] text-sm font-medium">
-              <span className="truncate">{label}</span>
-              <input defaultChecked={i === 1} className="invisible w-0" name="date-range" type="radio" value={label} />
-            </label>
-          ))}
-        </div>
+        <DateRangeTabs />
       </div>
 
       <div className="flex flex-wrap gap-4 p-4">
