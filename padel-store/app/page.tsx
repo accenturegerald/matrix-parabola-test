@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { prisma } from './lib/prisma'
 import { getRange, getPreviousRange } from './lib/date-range'
 import { DateRangeTabs } from './components/DateRangeTabs'
@@ -115,28 +116,37 @@ export default async function Home({
 
       <div className="flex justify-center px-4 py-3">
         <div className="flex flex-1 gap-3 max-w-[480px] flex-col items-stretch">
-          {['Manage Inventory','View Sales Reports','Customer Insights'].map((t) => (
-            <button key={t} className="flex h-12 w-full items-center justify-center rounded-lg px-5 bg-[color(display-p3_0.22_0.9_0.48_/_0.2)] text-[--primary] font-bold">
-              <span className="truncate">{t}</span>
-            </button>
-          ))}
+          <Link href="/inventory" className="flex h-12 w-full items-center justify-center rounded-lg px-5 bg-[color(display-p3_0.22_0.9_0.48_/_0.2)] text-[--primary] font-bold">
+            <span className="truncate">Manage Inventory</span>
+          </Link>
+          <Link href="/sales" className="flex h-12 w-full items-center justify-center rounded-lg px-5 bg-[color(display-p3_0.22_0.9_0.48_/_0.2)] text-[--primary] font-bold">
+            <span className="truncate">View Sales Reports</span>
+          </Link>
+          <Link href="/customers" className="flex h-12 w-full items-center justify-center rounded-lg px-5 bg-[color(display-p3_0.22_0.9_0.48_/_0.2)] text-[--primary] font-bold">
+            <span className="truncate">Customer Insights</span>
+          </Link>
         </div>
       </div>
 
       <div className="h-20" />
       <div className="fixed bottom-0 left-0 right-0 bg-[--card] border-t border-[--border]">
         <div className="flex justify-around items-center h-16 max-w-md mx-auto">
-          {[
-            { icon: 'home', label: 'Home', active: true },
-            { icon: 'shopping_bag', label: 'Orders' },
-            { icon: 'inventory_2', label: 'Products' },
-            { icon: 'settings', label: 'Settings' },
-          ].map((i) => (
-            <a key={i.label} className={`flex flex-col items-center justify-center ${i.active ? 'text-[--primary]' : 'text-[--muted-foreground]'}`} href="#">
-              <span className="material-symbols-outlined">{i.icon}</span>
-              <span className="text-xs">{i.label}</span>
-            </a>
-          ))}
+          <Link className={`flex flex-col items-center justify-center text-[--primary]`} href="/">
+            <span className="material-symbols-outlined">home</span>
+            <span className="text-xs">Home</span>
+          </Link>
+          <Link className={`flex flex-col items-center justify-center text-[--muted-foreground]`} href="/sales">
+            <span className="material-symbols-outlined">shopping_bag</span>
+            <span className="text-xs">Sales</span>
+          </Link>
+          <Link className={`flex flex-col items-center justify-center text-[--muted-foreground]`} href="/products">
+            <span className="material-symbols-outlined">inventory_2</span>
+            <span className="text-xs">Products</span>
+          </Link>
+          <Link className={`flex flex-col items-center justify-center text-[--muted-foreground]`} href="/finance">
+            <span className="material-symbols-outlined">settings</span>
+            <span className="text-xs">Finance</span>
+          </Link>
         </div>
       </div>
     </main>
